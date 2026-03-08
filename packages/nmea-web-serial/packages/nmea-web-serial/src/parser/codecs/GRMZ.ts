@@ -18,7 +18,7 @@ import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
 import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub';
 
 export const sentenceId = 'GRMZ' as const;
-export const sentenceName = 'GRMZ – Garmin barometric altitude' as const;
+export const sentenceName = 'Garmin barometric altitude' as const;
 
 export type GRMZFixType = 'none' | 'unknown' | '2D' | '3D';
 const FixTypes: GRMZFixType[] = ['none', 'unknown', '2D', '3D'];

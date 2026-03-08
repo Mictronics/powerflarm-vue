@@ -37,7 +37,7 @@ import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
 import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub';
 
 export const sentenceId = 'FLAU' as const;
-export const sentenceName = 'FLAU – Heartbeat, status, and basic alarms' as const;
+export const sentenceName = 'Heartbeat, status, and basic alarms' as const;
 
 export interface FLAUPacket extends PacketStub<typeof sentenceId> {
   gpsStatus: number;
