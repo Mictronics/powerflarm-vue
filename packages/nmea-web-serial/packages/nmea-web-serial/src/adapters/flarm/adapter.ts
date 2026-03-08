@@ -7,13 +7,13 @@ export const FLARM_SENTENCE_IDS = [
     'RMC',
     'GGA',
     'GSA',
+    'GRMZ',
     'FLAU',
     /*
         'LAA',
         'LAE',
         'LAV',
         'LAR',
-        'RMZ',
         'LAS',
         'LAQ',
         'LAO',
@@ -42,6 +42,7 @@ export const initialFlarmData: FlarmData = {
     alarm: null,
     status: null,
     dilution: null,
+    altitude: null,
 }
 
 export const initialFlarmPackets: StoredPackets = {};
