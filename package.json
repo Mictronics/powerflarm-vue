@@ -1,0 +1,23 @@
+{
+  "name": "powerflarm-vue-monorepo",
+  "version": "1.0.0",
+  "description": "PowerFLARM web client in Vue.",
+  "keywords": [
+    "FLARM",
+    "PowerFLARM",
+    "Vue"
+  ],
+  "license": "GPL-3.0-or-later",
+  "author": "Michael Wolf",
+  "type": "module",
+  "main": "index.html",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "build:all": "pnpm run --filter '*' build",
+    "clean:all": "pnpm run --filter '*' clean"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": {}
+}

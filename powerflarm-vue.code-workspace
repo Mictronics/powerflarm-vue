@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "editor.defaultFormatter": "trunk.io",
+    "files.autoSave": "afterDelay",
+    "editor.formatOnSave": true,
+  },
+}

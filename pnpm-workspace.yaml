@@ -1,0 +1,8 @@
+packages:
+  - packages/nmea-web-serial/packages/*
+  - packages/web
+
+minimumReleaseAge: 2880
+
+onlyBuiltDependencies:
+  - esbuild

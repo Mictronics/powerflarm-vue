@@ -1,0 +1,31 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "NMEA Web Serial",
+  "readme": "../../README.md",
+  "entryPoints": ["src"],
+  "sort": ["source-order"],
+  "searchInComments": true,
+  "searchInDocuments": true,
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true,
+    "includeFolders": false,
+    "excludeReferences": true
+  },
+  "groupOrder": ["Documentation", "*"],
+  "hostedBaseUrl": "https://antarctica.github.io/nmea-web-serial/",
+  "navigationLinks": {
+    "GitHub": "https://github.com/antarctica/nmea-web-serial",
+    "Client Vanilla": "/nmea-web-serial/examples/client-vanilla/",
+    "XState React": "/nmea-web-serial/examples/xstate-react/",
+    "XState Vanilla": "/nmea-web-serial/examples/xstate-vanilla/"
+  },
+  "sidebarLinks": {
+    "Home": "/nmea-web-serial/"
+  },
+  "highlightLanguages": ["typescript", "javascript", "html", "css"],
+  "markdownItOptions": {
+    "html": true
+  },
+  "suppressCommentWarningsInDeclarationFiles": true
+}

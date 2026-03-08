@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.base.json",
+
+  "files": [],
+  "references": [{ "path": "packages/web" }, { "path": "packages/nmea-web-serial/packages/nmea-web-serial" }]
+}
