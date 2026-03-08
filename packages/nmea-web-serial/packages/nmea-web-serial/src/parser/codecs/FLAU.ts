@@ -1,4 +1,3 @@
-
 /*
  * PFLAU – Heartbeat, status, and basic alarms
  *
@@ -9,14 +8,14 @@
  * Field Number:
  *  1. Number of devices with unique IDs currently received regardless of the horizontal or vertical separation. 0-99
  *  2. Transmission status:
- *      1 for OK 
+ *      1 for OK
  *      0 for no transmission.
  *  3. GPS status:
  *      0 = no GPS reception
  *      1 = 3d-fix on ground, i.e. not airborne
  *      2 = 3d-fix when airborne
  *  4. Power status:
- *      1 for OK 
+ *      1 for OK
  *      0 for under- or over-voltage.
  *  5. Alarm level as assessed by FLARM:
  *      0 = no alarm (also used for no-alarm traffic information)
@@ -34,37 +33,37 @@
  *  10. 6-digit hexadecimal value (e.g. “5A77B1”) as configured in the target’s PFLAC,,ID.
  */
 
-import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub'
-import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub'
+import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
+import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub';
 
-export const sentenceId = 'FLAU' as const
-export const sentenceName = 'FLAU – Heartbeat, status, and basic alarms' as const
+export const sentenceId = 'FLAU' as const;
+export const sentenceName = 'FLAU – Heartbeat, status, and basic alarms' as const;
 
 export interface FLAUPacket extends PacketStub<typeof sentenceId> {
-    gpsStatus: number;
-    powerStatus: number;
-    rxDevices: number;
-    txDevices: number;
-    alarmLevel: number;
-    alarmType: number;
-    relativeBearing: number;
-    relativeVertical: number;
-    relativeDistance: number;
-    id: number
+  gpsStatus: number;
+  powerStatus: number;
+  rxDevices: number;
+  txDevices: number;
+  alarmLevel: number;
+  alarmType: number;
+  relativeBearing: number;
+  relativeVertical: number;
+  relativeDistance: number;
+  id: number;
 }
 
 export function decodeSentence(stub: PacketStub, fields: string[]): FLAUPacket {
-    return {
-        ...initStubFields(stub, sentenceId, sentenceName),
-        gpsStatus: parseInt(fields[3] ?? '0', 10),
-        powerStatus: parseInt(fields[4] ?? '0', 10),
-        rxDevices: parseInt(fields[1] ?? '0', 10),
-        txDevices: parseInt(fields[2] ?? '0', 10),
-        alarmLevel: parseInt(fields[5] ?? '0', 10),
-        alarmType: parseInt(fields[7] ?? '0', 10),
-        relativeBearing: parseInt(fields[6] ?? '0', 10),
-        relativeVertical: parseInt(fields[8] ?? '0', 10),
-        relativeDistance: parseInt(fields[9] ?? '0', 10),
-        id: parseInt(fields[1] ?? '0', 16),
-    }
+  return {
+    ...initStubFields(stub, sentenceId, sentenceName),
+    gpsStatus: parseInt(fields[3] ?? '0', 10),
+    powerStatus: parseInt(fields[4] ?? '0', 10),
+    rxDevices: parseInt(fields[1] ?? '0', 10),
+    txDevices: parseInt(fields[2] ?? '0', 10),
+    alarmLevel: parseInt(fields[5] ?? '0', 10),
+    alarmType: parseInt(fields[7] ?? '0', 10),
+    relativeBearing: fields[6] === '' ? 0 : parseInt(fields[6] ?? '0', 10),
+    relativeVertical: fields[8] === '' ? 0 : parseInt(fields[8] ?? '0', 10),
+    relativeDistance: fields[9] === '' ? 0 : parseInt(fields[9] ?? '0', 10),
+    id: parseInt(fields[1] ?? '0', 16),
+  };
 }
