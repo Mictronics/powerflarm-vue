@@ -27,7 +27,7 @@
  *  LIC      Returns a list of installed and not installed licenses
  *  LS       Returns a list of configuration files saved in memory
  *  TASK     Returns information about the declared task
- * 
+ *
  * Feature                              CAP Information Value
  * Audio Output                         AUD
  * Alert Zone Generator                 AZN
@@ -48,6 +48,7 @@
 
 import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
 import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub';
+import { createNmeaChecksumFooter } from '../../utils';
 
 export const sentenceId = 'FLAC' as const;
 export const sentenceName = 'Device features' as const;
@@ -109,6 +110,29 @@ export interface FLACPacket extends PacketStub<typeof sentenceId> {
   features: FLACFeatures;
 }
 
+export type FLACRequestConfigItem =
+  | 'HWVER'
+  | 'DEVTYPE'
+  | 'DEVICEID'
+  | 'SWVER'
+  | 'SWEXP'
+  | 'FLARMVER'
+  | 'BUILD'
+  | 'SER'
+  | 'REGION'
+  | 'RADIOID'
+  | 'CAP'
+  | 'OBSTDB'
+  | 'OBSTEXP'
+  | 'LIC'
+  | 'LS'
+  | 'TASK';
+
+export interface FLACRequestPacket extends PacketStub<typeof sentenceId> {
+  queryType: 'R';
+  configItem: FLACRequestConfigItem;
+}
+
 export function decodeSentence(stub: PacketStub, fields: string[]): FLACPacket {
   const features: FLACFeatures = {
     audio: false,
@@ -149,4 +173,14 @@ export function decodeSentence(stub: PacketStub, fields: string[]): FLACPacket {
   }
 
   return decoded;
+}
+
+export function encodePacket(packet: FLACRequestPacket, talker: string): string {
+  const result = ['$' + talker + sentenceId];
+
+  result.push(packet.queryType);
+  result.push(packet.configItem);
+
+  const resultWithoutChecksum = result.join(',');
+  return resultWithoutChecksum + createNmeaChecksumFooter(resultWithoutChecksum);
 }
