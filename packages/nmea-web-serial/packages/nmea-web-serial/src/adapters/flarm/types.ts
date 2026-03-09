@@ -1,6 +1,6 @@
 import type { GGAPacket, RMCPacket, GSAPacket } from 'nmea-simple';
 import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
-import type { FLAUPacket, GRMZPacket } from '../../parser/codecs';
+import type { FLAUPacket, GRMZPacket, FLACPacket } from '../../parser/codecs';
 import type { GRMZFixType } from '../../parser/codecs/GRMZ';
 
 export enum AlarmLevel {
@@ -83,6 +83,26 @@ export interface FlarmData {
     fixMode: GRMZFixType;
     source: 'GRMZ' | null;
   } | null;
+  device: {
+    features: {
+      audio: boolean;
+      alertZoneGenerator: boolean;
+      pressureSensor: boolean;
+      batteryCompartment: boolean;
+      secondDataPort: boolean;
+      engineNoiseLevelSensor: boolean;
+      groundStationDevice: boolean;
+      igcApprovedRecorder: boolean;
+      obstacleDatabase: boolean;
+      antennaDiversity: boolean;
+      sdCard: boolean;
+      garminTIS: boolean;
+      userInterface: boolean;
+      usbSlot: boolean;
+      adsbModule: boolean;
+    } | null;
+    source: 'FLAC' | null;
+  } | null;
 }
 
 export interface StoredPackets extends Record<string, PacketStub | undefined> {
@@ -96,4 +116,6 @@ export interface StoredPackets extends Record<string, PacketStub | undefined> {
   FLAU?: FLAUPacket;
   // PGRMZ – Garmin's barometric altitude
   GRMZ?: GRMZPacket;
+  // PFLAC – Device features
+  FLAC?: FLACPacket;
 }

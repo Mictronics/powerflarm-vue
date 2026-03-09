@@ -5,20 +5,16 @@
 import type { Packet } from 'nmea-simple';
 import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
 import type { UnknownPacket } from 'nmea-simple/dist/codecs/UnknownPacket';
-import type { DBKPacket } from './codecs/DBK';
-import type { DBSPacket } from './codecs/DBS';
-import type { DPTPacket } from './codecs/DPT';
-import type { FLAUPacket } from './codecs/FLAU';
-import type { GRMZPacket } from './codecs/GRMZ';
 import { DefaultPacketFactory, parseGenericPacket } from 'nmea-simple';
 import { decodeSentence as decodeUnknown } from 'nmea-simple/dist/codecs/UnknownPacket';
-import { decodeSentence as decodeDBK } from './codecs/DBK';
-import { decodeSentence as decodeDBS } from './codecs/DBS';
-import { decodeSentence as decodeDPT } from './codecs/DPT';
-import { decodeSentence as decodeFLAU } from './codecs/FLAU';
-import { decodeSentence as decodeGRMZ } from './codecs/GRMZ';
+import { decodeSentence as decodeDBK, type DBKPacket } from './codecs/DBK';
+import { decodeSentence as decodeDBS, type DBSPacket } from './codecs/DBS';
+import { decodeSentence as decodeDPT, type DPTPacket } from './codecs/DPT';
+import { decodeSentence as decodeFLAU, type FLAUPacket } from './codecs/FLAU';
+import { decodeSentence as decodeGRMZ, type GRMZPacket } from './codecs/GRMZ';
+import { decodeSentence as decodeFLAC, type FLACPacket } from './codecs/FLAC';
 
-type CustomPackets = DBSPacket | DBKPacket | DPTPacket | FLAUPacket | GRMZPacket;
+type CustomPackets = DBSPacket | DBKPacket | DPTPacket | FLAUPacket | GRMZPacket | FLACPacket;
 type ExtendedNmeaPacket = Packet | CustomPackets;
 
 function assembleExtendedNmeaPacket(stub: PacketStub, fields: string[]): CustomPackets | null {
@@ -35,6 +31,8 @@ function assembleExtendedNmeaPacket(stub: PacketStub, fields: string[]): CustomP
           return decodeFLAU(stub, fields);
         case 'GRMZ':
           return decodeGRMZ(stub, fields);
+        case 'FLAC':
+          return decodeFLAC(stub, fields);
         default:
           return null;
       }

@@ -1,6 +1,6 @@
 import type { GGAPacket, RMCPacket, GSAPacket } from 'nmea-simple';
 import type { FlarmData, StoredPackets } from './types';
-import type { FLAUPacket, GRMZPacket } from '../../parser/codecs';
+import type { FLAUPacket, GRMZPacket, FLACPacket } from '../../parser/codecs';
 
 const computePosition = (gga?: GGAPacket, rmc?: RMCPacket): FlarmData['position'] => {
   if (gga && gga.fixType !== 'none') {
@@ -115,6 +115,16 @@ const computeAltitude = (alt?: GRMZPacket): FlarmData['altitude'] => {
   return null;
 };
 
+const computeDevice = (dev?: FLACPacket): FlarmData['device'] => {
+  if (dev) {
+    return {
+      features: dev?.features,
+      source: 'FLAC',
+    };
+  }
+  return null;
+};
+
 export function computeFlarmData(packets: StoredPackets): FlarmData {
   const time = computeTime(packets.GGA, packets.RMC);
   const position = computePosition(packets.GGA, packets.RMC);
@@ -124,6 +134,7 @@ export function computeFlarmData(packets: StoredPackets): FlarmData {
   const status = computeStatus(packets.FLAU);
   const alarm = computeAlarm(packets.FLAU);
   const altitude = computeAltitude(packets.GRMZ);
+  const device = computeDevice(packets.FLAC);
 
-  return { time, position, speed, heading, status, alarm, dilution, altitude };
+  return { time, position, speed, heading, status, alarm, dilution, altitude, device };
 }
