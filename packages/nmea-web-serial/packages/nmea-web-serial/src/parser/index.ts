@@ -12,10 +12,21 @@ import { decodeSentence as decodeDBS, type DBSPacket } from './codecs/DBS';
 import { decodeSentence as decodeDPT, type DPTPacket } from './codecs/DPT';
 import { decodeSentence as decodeFLAU, type FLAUPacket } from './codecs/FLAU';
 import { decodeSentence as decodeGRMZ, type GRMZPacket } from './codecs/GRMZ';
-import { decodeSentence as decodeFLAC, type FLACPacket } from './codecs/FLAC';
+import {
+  decodeSentence as decodeFLAC,
+  encodePacket as encodeFLAC,
+  type FLACPacket,
+  type FLACRequestPacket,
+} from './codecs/FLAC';
 
-type CustomPackets = DBSPacket | DBKPacket | DPTPacket | FLAUPacket | GRMZPacket | FLACPacket;
-type ExtendedNmeaPacket = Packet | CustomPackets;
+type CustomPackets = DBSPacket | DBKPacket | DPTPacket | FLAUPacket | GRMZPacket | FLACPacket | FLACRequestPacket;
+export type ExtendedNmeaPacket = Packet | CustomPackets;
+
+type Encoder = (packet: ExtendedNmeaPacket, talker: string) => string;
+
+const encoders: { [sentenceId: string]: Encoder } = {
+  FLAC: encodeFLAC as Encoder,
+};
 
 function assembleExtendedNmeaPacket(stub: PacketStub, fields: string[]): CustomPackets | null {
   switch (stub.talkerId) {
@@ -73,4 +84,17 @@ const UNSAFE_NMEA_PACKET_FACTORY = new UnsafePacketFactory();
 
 export function parseUnsafeNmeaSentence(sentence: string): ExtendedNmeaPacket | UnknownPacket {
   return parseGenericPacket(sentence, UNSAFE_NMEA_PACKET_FACTORY);
+}
+
+export function encodeExtendedNmeaPacket(packet: ExtendedNmeaPacket, talker: string = 'P'): string {
+  if (packet === undefined) {
+    throw new Error('Packet must be given.');
+  }
+
+  const encoder = encoders[packet.sentenceId];
+  if (encoder) {
+    return encoder(packet, talker);
+  } else {
+    throw Error(`No known encoder for sentence ID "${packet.sentenceId}"`);
+  }
 }
