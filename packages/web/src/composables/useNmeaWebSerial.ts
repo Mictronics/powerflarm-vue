@@ -1,5 +1,6 @@
 import { ref, onUnmounted, watch } from 'vue';
 import { FlarmNmeaClient, type FlarmData } from '@flarm/adapters/flarm';
+import { encodeExtendedNmeaPacket } from '@flarm/parser';
 
 export enum DeviceStatus {
   DeviceDisconnected = 1,
@@ -12,18 +13,7 @@ export enum DeviceStatus {
 export const useNmeaWebSerial = (baudRate?: number) => {
   const status = ref<DeviceStatus>(DeviceStatus.DeviceDisconnected);
   const error = ref<string | null>();
-  const client = new FlarmNmeaClient({
-    onData: (data: FlarmData) => {
-      updateFlarmData(data);
-    },
-    onStateChange: (isConnected: boolean) => {
-      updateConnectionState(isConnected);
-    },
-    onError: (error: string) => {
-      updateError(error);
-    },
-    baudRate: baudRate ?? 115200,
-  });
+  let client: FlarmNmeaClient | null = null;
 
   const updateConnectionState = (isConnected: boolean) => {
     if (!client) {
@@ -49,6 +39,19 @@ export const useNmeaWebSerial = (baudRate?: number) => {
     console.log(data);
   };
 
+  client = new FlarmNmeaClient({
+    onData: (data: FlarmData) => {
+      updateFlarmData(data);
+    },
+    onStateChange: (isConnected: boolean) => {
+      updateConnectionState(isConnected);
+    },
+    onError: (error: string) => {
+      updateError(error);
+    },
+    baudRate: baudRate ?? 115200,
+  });
+
   const connect = () => {
     client.setLogging(true);
     client.connect();
@@ -68,6 +71,10 @@ export const useNmeaWebSerial = (baudRate?: number) => {
 
   watch(status, (s) => {
     if (s === DeviceStatus.DeviceConnected) {
+      client.machine.send({
+        type: 'SERIAL.WRITE',
+        sentence: encodeExtendedNmeaPacket({ queryType: 'R', configItem: 'CAP', sentenceId: 'FLAC' }, 'P'),
+      });
     }
   });
 
