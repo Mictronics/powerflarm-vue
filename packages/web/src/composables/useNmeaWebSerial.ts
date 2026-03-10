@@ -14,6 +14,7 @@ export enum DeviceStatus {
 export const useNmeaWebSerial = (baudRate?: number) => {
   const status = ref<DeviceStatus>(DeviceStatus.DeviceDisconnected);
   const error = ref<string | null>();
+  const flarmData = ref<Partial<FlarmData>>({});
   let client: FlarmNmeaClient | null = null;
 
   const updateConnectionState = (isConnected: boolean) => {
@@ -36,7 +37,9 @@ export const useNmeaWebSerial = (baudRate?: number) => {
     }
   };
 
-  const updateFlarmData = (data: FlarmData) => {};
+  const updateFlarmData = (data: FlarmData) => {
+    Object.assign(flarmData.value, data);
+  };
 
   client = new FlarmNmeaClient({
     onData: (data: FlarmData) => {
@@ -95,6 +98,8 @@ export const useNmeaWebSerial = (baudRate?: number) => {
 
   return {
     status,
+    error,
+    flarmData,
     connect,
     disconnect,
   };
