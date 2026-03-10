@@ -1,0 +1,3 @@
+[submodule "packages/nmea-web-serial"]
+	path = packages/nmea-web-serial
+	url = https://github.com/Mictronics/nmea-web-serial.git
