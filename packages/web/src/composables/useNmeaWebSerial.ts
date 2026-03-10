@@ -1,6 +1,7 @@
 import { ref, onUnmounted, watch } from 'vue';
 import { FlarmNmeaClient, type FlarmData } from '@flarm/adapters/flarm';
 import { encodeExtendedNmeaPacket } from '@flarm/parser';
+import type { FLACRequestConfigItem } from '@flarm/parser/codecs/FLAC';
 
 export enum DeviceStatus {
   DeviceDisconnected = 1,
@@ -35,9 +36,7 @@ export const useNmeaWebSerial = (baudRate?: number) => {
     }
   };
 
-  const updateFlarmData = (data: FlarmData) => {
-    console.log(data);
-  };
+  const updateFlarmData = (data: FlarmData) => {};
 
   client = new FlarmNmeaClient({
     onData: (data: FlarmData) => {
@@ -53,7 +52,7 @@ export const useNmeaWebSerial = (baudRate?: number) => {
   });
 
   const connect = () => {
-    client.setLogging(true);
+    client.setLogging(false);
     client.connect();
   };
 
@@ -71,10 +70,26 @@ export const useNmeaWebSerial = (baudRate?: number) => {
 
   watch(status, (s) => {
     if (s === DeviceStatus.DeviceConnected) {
-      client.machine.send({
-        type: 'SERIAL.WRITE',
-        sentence: encodeExtendedNmeaPacket({ queryType: 'R', configItem: 'CAP', sentenceId: 'FLAC' }, 'P'),
-      });
+      setTimeout(() => {
+        const configItems: FLACRequestConfigItem[] = [
+          'HWVER',
+          'DEVTYPE',
+          'DEVICEID',
+          'SWVER',
+          'FLARMVER',
+          'BUILD',
+          'SER',
+          'REGION',
+          'CAP',
+          'RADIOID',
+        ];
+        configItems.forEach((configItem) => {
+          client.machine.send({
+            type: 'SERIAL.WRITE',
+            sentence: encodeExtendedNmeaPacket({ queryType: 'R', configItem, sentenceId: 'FLAC' }, 'P'),
+          });
+        });
+      }, 250);
     }
   });
 
