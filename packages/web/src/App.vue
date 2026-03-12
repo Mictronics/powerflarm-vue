@@ -52,6 +52,14 @@
           </div>
         </template>
       </Card>
+      <div class="mt-auto text-center text-xs text-mist-500/40 dark:text-mist-400/40">
+        <a href="https://github.com/Mictronics/powerflarm-vue" target="_blank" class="hover:underline text-link">
+          {{ appName }}
+        </a>
+        <p>Michael Wolf</p>
+        <a class="hover:underline text-link" href="https://www.mictronics.de" target="_blank">Mictronics</a>
+        <p>{{ version }} #{{ commitHash }}</p>
+      </div>
     </aside>
     <aside class="w-56 bg-mist-50 p-4 border rounded-2xl border-mist-300 flex flex-col gap-2"></aside>
     <main class="flex-1 overflow-auto bg-mist-50 border rounded-2xl border-mist-300"></main>
@@ -154,4 +162,18 @@ const hasFix = computed(() => {
   return fix !== undefined && fix !== 'none';
 });
 const satellitesInView = computed(() => flarmPosition.value?.satellitesInView);
+
+const appName = computed(() => {
+  return String(import.meta.env.VITE_APP_NAME)?.toWellFormed() || '';
+});
+const version = computed(() => {
+  return String(import.meta.env.VITE_VERSION)?.toUpperCase() || '';
+});
+const commitHash = computed(() => {
+  return (
+    String(import.meta.env.VITE_COMMIT_HASH)
+      ?.toUpperCase()
+      .slice(0, 7) || 'Unknown'
+  );
+});
 </script>

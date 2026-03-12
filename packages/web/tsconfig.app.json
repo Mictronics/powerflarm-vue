@@ -9,6 +9,7 @@
       "@flarm/*": ["../nmea-web-serial/packages/nmea-web-serial/src/*"]
     },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "types": ["@types/w3c-web-serial"]
+    "types": ["@types/w3c-web-serial"],
+    "lib": ["ESNext", "DOM"]
   }
 }
