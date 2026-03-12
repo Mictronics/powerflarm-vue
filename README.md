@@ -1,1 +1,1 @@
-# PowerFLARM powered Vue
+# PowerFLARM Vue
