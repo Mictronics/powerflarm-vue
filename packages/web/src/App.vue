@@ -110,12 +110,14 @@
         </template>
       </VirtualScroller>
     </aside>
-    <main class="flex-1 overflow-auto bg-mist-50 border rounded-2xl border-mist-300"></main>
+    <main class="flex-1 bg-mist-50 border rounded-2xl border-mist-300 flex items-center justify-center">
+      <canvas ref="radarCanvas" class="w-full h-full"></canvas>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import {
   Router,
   Satellite,
@@ -178,6 +180,7 @@ const toggleConnection = async (): Promise<void> => {
 const flarmDevice = computed(() => flarmData.value.device);
 const flarmPosition = computed(() => flarmData.value.position);
 const flarmAltitude = computed(() => flarmData.value.altitude);
+const flarmHeading = computed(() => flarmData.value.heading);
 
 const featureList = [
   { key: 'audio', label: 'Audio' },
@@ -255,8 +258,8 @@ const flarmAircrafts = computed(() => {
     aircrafts: [
       {
         alarmLevel: 0,
-        relativeNorth: 1,
-        relativeEast: 1,
+        relativeNorth: 100,
+        relativeEast: 100,
         relativeVertical: 1,
         idType: 1,
         id: 'ABCDEF',
@@ -298,11 +301,6 @@ const altitudeClass = (alt?: number) => {
 };
 
 const virtualScrollerHeight = ref('0px');
-onMounted(() => {
-  virtualScrollerHeight.value = `${window.innerHeight - 80}px`;
-  window.addEventListener('resize', onResize);
-});
-
 const onResize = () => {
   virtualScrollerHeight.value = `${window.innerHeight - 80}px`;
 };
@@ -319,6 +317,165 @@ const alarmBorderClass = (level?: number) => {
       return 'border-mist-300 border-1';
   }
 };
+
+const radarCanvas = ref<HTMLCanvasElement | null>(null);
+const lastPositions = ref<Record<string, { x: number; y: number }>>({});
+function drawRadar(aircrafts: FlarmAircraft[]) {
+  const canvas = radarCanvas.value;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Determine zoom automatically based on nearest aircraft
+  let nearest = Math.min(
+    ...aircrafts.map((a) => Math.sqrt((a.relativeEast ?? 0) ** 2 + (a.relativeNorth ?? 0) ** 2) || 5000),
+  );
+  let maxRange = nearest < 1000 ? 1000 : nearest < 3000 ? 3000 : 5000;
+  const scale = Math.min(w, h) / 2 / maxRange;
+
+  // Heading up
+  const heading = flarmHeading.value?.degreesTrue ?? 0;
+  const headingRad = (-heading * Math.PI) / 180;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(headingRad);
+
+  drawRings(ctx, scale, maxRange);
+  drawOwnship(ctx);
+
+  // Draw aircraft with interpolation
+  aircrafts.forEach((a) => drawAircraft(ctx, a, scale));
+
+  ctx.restore();
+}
+
+function drawRings(ctx: CanvasRenderingContext2D, scale: number, maxRange: number) {
+  const rings = [1000, 3000, 5000].filter((r) => r <= maxRange);
+
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 1;
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#64748b';
+
+  rings.forEach((r) => {
+    const radius = r * scale;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillText(`${r / 1000} km`, radius + 4, -4);
+  });
+}
+
+function drawOwnship(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = '#0284c7';
+  ctx.beginPath();
+  ctx.moveTo(0, -10);
+  ctx.lineTo(6, 8);
+  ctx.lineTo(-6, 8);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: number) {
+  if (a.relativeNorth == null || a.relativeEast == null) return;
+
+  // Interpolate previous position for smooth movement
+  const id = a.id ?? a.idType?.toString() ?? Math.random().toString();
+  const prev = lastPositions.value[id] || { x: a.relativeEast, y: -a.relativeNorth };
+  const x = prev.x + (a.relativeEast - prev.x) * 0.2 * scale;
+  const y = prev.y + (-a.relativeNorth - prev.y) * 0.2 * scale;
+  lastPositions.value[id] = { x, y };
+
+  // Color by alarm level
+  const alarm = a.alarmLevel ?? 0;
+  let color = '#334155';
+  if (alarm === 1) color = '#f59e0b';
+  if (alarm === 2) color = '#f97316';
+  if (alarm === 3) color = '#dc2626';
+
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+
+  // Aircraft icon
+  let icon = '●';
+  switch (a.aircraftType) {
+    case AircraftType.JetAircraft:
+      icon = '✈️';
+      break;
+    case AircraftType.Balloon:
+    case AircraftType.Airship:
+      icon = '🎈';
+      break;
+    case AircraftType.Glider:
+    case AircraftType.DropPlane:
+    case AircraftType.TowPlane:
+    case AircraftType.PropellerAircraft:
+      icon = '🛩️';
+      break;
+    case AircraftType.Rotorcraft:
+      icon = '🚁';
+      break;
+    case AircraftType.Skydiver:
+    case AircraftType.Paraglider:
+    case AircraftType.HangGlider:
+      icon = '🪂';
+      break;
+    case AircraftType.Reserved0:
+    case AircraftType.Reserved14:
+    case AircraftType.UAV:
+      icon = '🛸';
+      break;
+    case AircraftType.Unknown:
+      icon = '🐝';
+      break;
+    case AircraftType.StaticObstacle:
+      icon = '🗼';
+      break;
+  }
+  ctx.font = '14px sans-serif';
+  ctx.fillText(icon, x - 7, y + 5);
+
+  // Track arrow
+  if (a.track != null) {
+    const angle = (a.track * Math.PI) / 180;
+    const len = 20;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.sin(angle) * len, y - Math.cos(angle) * len);
+    ctx.stroke();
+  }
+
+  // Callsign label
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = '#0f172a';
+  ctx.fillText(a.id ?? '', x + 10, y - 5);
+}
+
+watch(
+  flarmAircrafts,
+  (list) => {
+    drawRadar(list);
+  },
+  { deep: true },
+);
+
+onMounted(() => {
+  virtualScrollerHeight.value = `${window.innerHeight - 80}px`;
+  window.addEventListener('resize', onResize);
+  drawRadar(flarmAircrafts.value);
+});
 
 const appName = computed(() => {
   return String(import.meta.env.VITE_APP_NAME)?.toWellFormed() || '';
