@@ -494,18 +494,15 @@ function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: nu
   ctx.fillText(a.id ?? '', x + 10, y - 5);
 }
 
-watch(
-  flarmAircrafts,
-  (list) => {
-    drawRadar(list);
-  },
-  { deep: true },
-);
+function renderLoop() {
+  drawRadar(flarmAircrafts.value);
+  requestAnimationFrame(renderLoop);
+}
 
 onMounted(() => {
   virtualScrollerHeight.value = `${window.innerHeight - 80}px`;
   window.addEventListener('resize', onResize);
-  drawRadar(flarmAircrafts.value);
+  renderLoop();
 });
 
 const appName = computed(() => {
