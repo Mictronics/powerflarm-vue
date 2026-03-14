@@ -103,7 +103,7 @@
                   {{ aircraftTypes[item.aircraftType ?? AircraftType.Unknown] }}
                 </span>
                 <EyeOff v-if="item.noTrack" :size="18" />
-                <Eye v-else :size="18" />
+                <Eye v-else :size="18" class="text-mist-400" />
               </div>
             </template>
           </Card>
@@ -258,8 +258,8 @@ const flarmAircrafts = computed(() => {
     aircrafts: [
       {
         alarmLevel: 0,
-        relativeNorth: 100,
-        relativeEast: 100,
+        relativeNorth: 500,
+        relativeEast: 500,
         relativeVertical: 1,
         idType: 1,
         id: 'ABCDEF',
@@ -268,7 +268,7 @@ const flarmAircrafts = computed(() => {
         groundSpeed: 1,
         climbRate: 1,
         aircraftType: AircraftType.Rotorcraft,
-        noTrack: true,
+        noTrack: false,
         rssi: -10,
         source: 0,
       },
@@ -356,13 +356,17 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   drawOwnship(ctx);
 
   // Draw aircraft with interpolation
-  aircrafts.forEach((a) => drawAircraft(ctx, a, scale));
-
+  aircrafts.filter((a) => !a.noTrack).forEach((a) => drawAircraft(ctx, a, scale));
+  aircrafts.forEach((a) => {
+    if (a.noTrack && a.id) {
+      delete lastPositions.value[a.id];
+    }
+  });
   ctx.restore();
 }
 
 function drawRings(ctx: CanvasRenderingContext2D, scale: number, maxRange: number) {
-  const rings = [1000, 3000, 5000].filter((r) => r <= maxRange);
+  const rings = [100, 500, 1000, 3000, 5000].filter((r) => r <= maxRange);
 
   ctx.strokeStyle = '#cbd5e1';
   ctx.lineWidth = 1;
@@ -391,12 +395,21 @@ function drawOwnship(ctx: CanvasRenderingContext2D) {
 function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: number) {
   if (a.relativeNorth == null || a.relativeEast == null) return;
 
-  // Interpolate previous position for smooth movement
   const id = a.id ?? a.idType?.toString() ?? Math.random().toString();
-  const prev = lastPositions.value[id] || { x: a.relativeEast, y: -a.relativeNorth };
-  const x = prev.x + (a.relativeEast - prev.x) * 0.2 * scale;
-  const y = prev.y + (-a.relativeNorth - prev.y) * 0.2 * scale;
-  lastPositions.value[id] = { x, y };
+
+  // convert meters -> pixels FIRST
+  const targetX = a.relativeEast * scale;
+  const targetY = -a.relativeNorth * scale;
+
+  const prev = lastPositions.value[id] || { x: targetX, y: targetY };
+
+  // interpolate in pixel space
+  const x = prev.x + (targetX - prev.x) * 0.2;
+  const y = prev.y + (targetY - prev.y) * 0.2;
+
+  if (!lastPositions.value[id]) {
+    lastPositions.value[id] = { x: targetX, y: targetY };
+  }
 
   // Color by alarm level
   const alarm = a.alarmLevel ?? 0;
@@ -409,7 +422,7 @@ function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: nu
   ctx.strokeStyle = color;
 
   // Aircraft icon
-  let icon = '●';
+  let icon = '🔷';
   switch (a.aircraftType) {
     case AircraftType.JetAircraft:
       icon = '✈️';
