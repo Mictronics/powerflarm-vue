@@ -74,7 +74,7 @@
             <template #content>
               <div class="flex items-center justify-between">
                 <div class="flex items-center justify-center w-14">
-                  <div class="text-sky-500" :style="{ transform: `rotate(${item.track || 0}deg)` }">
+                  <div class="text-sky-500" :style="{ transform: `rotate(${(item.track || 0) - 45}deg)` }">
                     <Navigation :size="28" />
                   </div>
                 </div>
@@ -262,7 +262,7 @@ const flarmAircrafts = computed(() => {
         relativeVertical: 1,
         idType: 1,
         id: 'ABCDEF',
-        track: 1,
+        track: 0,
         turnRate: 1,
         groundSpeed: 1,
         climbRate: 1,
@@ -339,7 +339,8 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  resizeCanvas();
+  const resizeObserver = new ResizeObserver(() => resizeCanvas());
+  resizeObserver.observe(radarCanvas.value!);
 
   const w = canvas.width;
   const h = canvas.height;
@@ -352,11 +353,12 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   let nearest = aircrafts.length
     ? Math.min(...aircrafts.map((a) => Math.sqrt((a.relativeEast ?? 0) ** 2 + (a.relativeNorth ?? 0) ** 2)))
     : 5000;
-  let maxRange = nearest < 1000 ? 1000 : nearest < 3000 ? 3000 : 5000;
+  let maxRange = Math.max(1000, nearest * 1.5);
+  maxRange = Math.min(maxRange, 5000);
   const scale = Math.min(w, h) / 2 / maxRange;
 
   // Heading up
-  const heading = flarmHeading.value?.degreesTrue ?? 0;
+  const heading = 0;
   const headingRad = (-heading * Math.PI) / 180;
   ctx.save();
   ctx.translate(cx, cy);
@@ -370,13 +372,6 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   aircrafts.forEach((a) => {
     if (a.noTrack && a.id) {
       delete lastPositions.value[a.id];
-    }
-  });
-
-  const activeIds = new Set(aircrafts.map((a) => a.id));
-  Object.keys(lastPositions.value).forEach((id) => {
-    if (!activeIds.has(id)) {
-      delete lastPositions.value[id];
     }
   });
 
@@ -422,11 +417,12 @@ function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: nu
   const prev = lastPositions.value[id] || { x: targetX, y: targetY };
 
   // interpolate in pixel space
-  const x = prev.x + (targetX - prev.x) * 0.2;
-  const y = prev.y + (targetY - prev.y) * 0.2;
+  const smoothing = 0.15;
+  const x = prev.x + (targetX - prev.x) * smoothing;
+  const y = prev.y + (targetY - prev.y) * smoothing;
 
   if (!lastPositions.value[id]) {
-    lastPositions.value[id] = { x: targetX, y: targetY };
+    lastPositions.value[id] = { x, y };
   }
 
   // Color by alarm level
@@ -493,6 +489,14 @@ function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: nu
   ctx.fillStyle = '#0f172a';
   ctx.fillText(a.id ?? '', x + 10, y - 5);
 }
+
+watch(flarmAircrafts, (aircrafts) => {
+  const active = new Set(aircrafts.map((a) => a.id));
+
+  Object.keys(lastPositions.value).forEach((id) => {
+    if (!active.has(id)) delete lastPositions.value[id];
+  });
+});
 
 function renderLoop() {
   drawRadar(flarmAircrafts.value);
