@@ -82,7 +82,6 @@
                   <p class="font-semibold text-sm">{{ item.idType }}: {{ item.id }}</p>
                   <div class="flex gap-3 text-mist-500">
                     <span v-if="item.groundSpeed">{{ item.groundSpeed }} km/h</span>
-                    <span v-if="item.climbRate">{{ item.climbRate.toFixed(1) }} m/s</span>
                   </div>
                 </div>
                 <div class="text-right font-semibold text-sm" :class="altitudeClass(item.relativeVertical)">
@@ -320,6 +319,19 @@ const alarmBorderClass = (level?: number) => {
 
 const radarCanvas = ref<HTMLCanvasElement | null>(null);
 const lastPositions = ref<Record<string, { x: number; y: number }>>({});
+
+function resizeCanvas() {
+  const canvas = radarCanvas.value;
+  if (!canvas) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+  if (canvas.width !== rect.width || canvas.height !== rect.height) {
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
+}
+
 function drawRadar(aircrafts: FlarmAircraft[]) {
   const canvas = radarCanvas.value;
   if (!canvas) return;
@@ -327,9 +339,7 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
+  resizeCanvas();
 
   const w = canvas.width;
   const h = canvas.height;
@@ -339,9 +349,9 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   ctx.clearRect(0, 0, w, h);
 
   // Determine zoom automatically based on nearest aircraft
-  let nearest = Math.min(
-    ...aircrafts.map((a) => Math.sqrt((a.relativeEast ?? 0) ** 2 + (a.relativeNorth ?? 0) ** 2) || 5000),
-  );
+  let nearest = aircrafts.length
+    ? Math.min(...aircrafts.map((a) => Math.sqrt((a.relativeEast ?? 0) ** 2 + (a.relativeNorth ?? 0) ** 2)))
+    : 5000;
   let maxRange = nearest < 1000 ? 1000 : nearest < 3000 ? 3000 : 5000;
   const scale = Math.min(w, h) / 2 / maxRange;
 
@@ -362,6 +372,14 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
       delete lastPositions.value[a.id];
     }
   });
+
+  const activeIds = new Set(aircrafts.map((a) => a.id));
+  Object.keys(lastPositions.value).forEach((id) => {
+    if (!activeIds.has(id)) {
+      delete lastPositions.value[id];
+    }
+  });
+
   ctx.restore();
 }
 
