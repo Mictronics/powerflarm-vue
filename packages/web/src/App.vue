@@ -339,8 +339,7 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const resizeObserver = new ResizeObserver(() => resizeCanvas());
-  resizeObserver.observe(radarCanvas.value!);
+  resizeCanvas();
 
   const w = canvas.width;
   const h = canvas.height;
