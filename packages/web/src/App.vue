@@ -70,7 +70,7 @@
         class="flex flex-col gap-2"
       >
         <template #item="{ item }: { item: FlarmAircraft }">
-          <Card pt:body:class="card-body" class="w-full" :class="alarmBorderClass(item.alarmLevel)">
+          <Card :key="item.id" pt:body:class="card-body" class="w-full" :class="alarmBorderClass(item.alarmLevel)">
             <template #content>
               <div class="flex items-center justify-between">
                 <div class="flex items-center justify-center w-14">
