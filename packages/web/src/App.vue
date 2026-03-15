@@ -1,5 +1,5 @@
 <template>
-  <div class="flex w-full h-screen bg-white p-1 gap-1">
+  <div class="flex w-full h-screen app-background p-4 gap-4">
     <aside class="w-56 bg-mist-50 p-2 border rounded-2xl border-mist-300 flex flex-col gap-2">
       <Button
         size="small"
@@ -81,6 +81,7 @@
                 <div class="flex-1 text-xs leading-8">
                   <p class="font-semibold text-sm">{{ item.idType }}: {{ item.id }}</p>
                   <div class="flex gap-3 text-mist-500">
+                    <span v-if="item.distance">{{ item.distance.toFixed(0) }} m</span>
                     <span v-if="item.groundSpeed">{{ item.groundSpeed }} km/h</span>
                   </div>
                 </div>
@@ -252,27 +253,7 @@ const sourceTypes: Partial<Record<FlarmSource, string>> = {
 };
 
 const flarmAircrafts = computed(() => {
-  //const raw = flarmData.value.aircrafts;
-  const raw = {
-    aircrafts: [
-      {
-        alarmLevel: 0,
-        relativeNorth: 500,
-        relativeEast: 500,
-        relativeVertical: 1,
-        idType: 1,
-        id: 'ABCDEF',
-        track: 0,
-        turnRate: 1,
-        groundSpeed: 1,
-        climbRate: 1,
-        aircraftType: AircraftType.Rotorcraft,
-        noTrack: false,
-        rssi: -10,
-        source: 0,
-      },
-    ],
-  } as FlarmAircrafts;
+  const raw = flarmData.value.aircrafts;
   const aircrafts = Array.isArray(raw) ? raw : (raw?.aircrafts ?? []);
 
   return [...aircrafts].sort((a, b) => {
@@ -360,7 +341,7 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   let nearest = aircrafts.length
     ? Math.min(...aircrafts.map((a) => Math.sqrt((a.relativeEast ?? 0) ** 2 + (a.relativeNorth ?? 0) ** 2)))
     : 5000;
-  let maxRange = Math.max(1000, nearest * 1.5);
+  let maxRange = Math.max(100, nearest * 1.5);
   maxRange = Math.min(maxRange, 5000);
   const scale = Math.min(w, h) / 2 / maxRange;
 
