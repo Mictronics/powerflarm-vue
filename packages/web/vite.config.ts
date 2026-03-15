@@ -37,5 +37,5 @@ export default defineConfig({
     'import.meta.env.VITE_COMMIT_HASH': JSON.stringify(hash),
     'import.meta.env.VITE_VERSION': JSON.stringify(version),
   },
-  base: '/',
+  base: '/flarm/',
 });
