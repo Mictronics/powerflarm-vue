@@ -485,9 +485,10 @@ function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: nu
   if (a.track != null) {
     const angle = (a.track * Math.PI) / 180;
     const len = 20;
+    const start = 8;
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + Math.sin(angle) * len, y - Math.cos(angle) * len);
+    ctx.moveTo(x + Math.sin(angle) * start, y - Math.cos(angle) * start);
+    ctx.lineTo(x + Math.sin(angle) * (start + len), y - Math.cos(angle) * (start + len));
     ctx.stroke();
   }
 
