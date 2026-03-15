@@ -416,11 +416,6 @@ function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: nu
   if (a.relativeNorth == null || a.relativeEast == null) return;
 
   const id = a.id ?? a.idType?.toString() ?? Math.random().toString();
-
-  // convert meters -> pixels FIRST
-  const targetX = a.relativeEast * scale;
-  const targetY = -a.relativeNorth * scale;
-
   const prev = lastPositions.value[id] ?? {
     east: a.relativeEast,
     north: a.relativeNorth,
