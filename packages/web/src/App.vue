@@ -1,5 +1,5 @@
 <template>
-  <div class="flex w-full min-h-screen bg-white p-1 gap-1">
+  <div class="flex w-full h-screen bg-white p-1 gap-1">
     <aside class="w-56 bg-mist-50 p-2 border rounded-2xl border-mist-300 flex flex-col gap-2">
       <Button
         size="small"
@@ -110,7 +110,7 @@
       </VirtualScroller>
     </aside>
     <main class="flex-1 bg-mist-50 border rounded-2xl border-mist-300 flex items-center justify-center">
-      <canvas ref="radarCanvas" class="w-full h-full"></canvas>
+      <canvas ref="radarCanvas" class="w-full h-full block"></canvas>
     </main>
   </div>
 </template>
@@ -318,17 +318,23 @@ const alarmBorderClass = (level?: number) => {
 };
 
 const radarCanvas = ref<HTMLCanvasElement | null>(null);
-const lastPositions = ref<Record<string, { x: number; y: number }>>({});
+const lastPositions = ref<Record<string, { east: number; north: number }>>({});
 
 function resizeCanvas() {
   const canvas = radarCanvas.value;
   if (!canvas) return;
 
   const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.round(rect.width * dpr);
+  const height = Math.round(rect.height * dpr);
 
-  if (canvas.width !== rect.width || canvas.height !== rect.height) {
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 }
 
@@ -339,10 +345,12 @@ function drawRadar(aircrafts: FlarmAircraft[]) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  resizeCanvas();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
 
-  const w = canvas.width;
-  const h = canvas.height;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
   const cx = w / 2;
   const cy = h / 2;
 
@@ -413,16 +421,21 @@ function drawAircraft(ctx: CanvasRenderingContext2D, a: FlarmAircraft, scale: nu
   const targetX = a.relativeEast * scale;
   const targetY = -a.relativeNorth * scale;
 
-  const prev = lastPositions.value[id] || { x: targetX, y: targetY };
+  const prev = lastPositions.value[id] ?? {
+    east: a.relativeEast,
+    north: a.relativeNorth,
+  };
 
-  // interpolate in pixel space
   const smoothing = 0.15;
-  const x = prev.x + (targetX - prev.x) * smoothing;
-  const y = prev.y + (targetY - prev.y) * smoothing;
+  const east = prev.east + (a.relativeEast - prev.east) * smoothing;
+  const north = prev.north + (a.relativeNorth - prev.north) * smoothing;
 
   if (!lastPositions.value[id]) {
-    lastPositions.value[id] = { x, y };
+    lastPositions.value[id] = { east, north };
   }
+
+  const x = east * scale;
+  const y = -north * scale;
 
   // Color by alarm level
   const alarm = a.alarmLevel ?? 0;
@@ -502,9 +515,23 @@ function renderLoop() {
   requestAnimationFrame(renderLoop);
 }
 
+let resizeObserver: ResizeObserver;
+
 onMounted(() => {
   virtualScrollerHeight.value = `${window.innerHeight - 80}px`;
   window.addEventListener('resize', onResize);
+
+  const canvas = radarCanvas.value;
+  if (!canvas) return;
+
+  resizeObserver = new ResizeObserver(() => {
+    resizeCanvas();
+  });
+
+  resizeObserver.observe(canvas.parentElement!);
+
+  resizeCanvas();
+
   renderLoop();
 });
 
