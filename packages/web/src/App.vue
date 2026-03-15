@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import {
   Router,
   Satellite,
@@ -510,12 +510,13 @@ watch(flarmAircrafts, (aircrafts) => {
   });
 });
 
+let resizeObserver: ResizeObserver;
+let frameId: number;
+
 function renderLoop() {
   drawRadar(flarmAircrafts.value);
-  requestAnimationFrame(renderLoop);
+  frameId = requestAnimationFrame(renderLoop);
 }
-
-let resizeObserver: ResizeObserver;
 
 onMounted(() => {
   virtualScrollerHeight.value = `${window.innerHeight - 80}px`;
@@ -529,10 +530,13 @@ onMounted(() => {
   });
 
   resizeObserver.observe(canvas.parentElement!);
-
   resizeCanvas();
-
   renderLoop();
+});
+
+onUnmounted(() => {
+  cancelAnimationFrame(frameId);
+  resizeObserver?.disconnect();
 });
 
 const appName = computed(() => {
