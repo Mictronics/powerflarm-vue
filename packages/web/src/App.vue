@@ -81,7 +81,7 @@
                 <div class="flex-1 text-xs leading-8">
                   <p class="font-semibold text-sm">{{ item.idType }}: {{ item.id }}</p>
                   <div class="flex gap-3 text-mist-500">
-                    <span v-if="item.distance">{{ item.distance.toFixed(0) }} m</span>
+                    <span v-if="item.distance">{{ formatDistance(item.distance) }}</span>
                     <span v-if="item.groundSpeed">{{ item.groundSpeed }} km/h</span>
                   </div>
                 </div>
@@ -266,6 +266,12 @@ const flarmAircrafts = computed(() => {
     return distA - distB;
   });
 });
+
+const formatDistance = (dist?: number) => {
+  if (dist == null) return '—';
+  if (dist < 1000) return `${dist.toFixed(0)} m`;
+  return `${(dist / 1000).toFixed(2)} km`;
+};
 
 const formatAltitude = (alt?: number) => {
   if (alt == null) return '--';
